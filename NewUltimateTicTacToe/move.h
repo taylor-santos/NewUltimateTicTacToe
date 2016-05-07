@@ -25,7 +25,7 @@ struct Move {
 	}
 };
 
-void fillMoves(Move* move, int board[9][9], int playableGrid, bool currPlayer, bool maximizingPlayer, int depth, int* count);
+void fillMoves(Move* move, int board[9][9], int playableGrid, bool currPlayer, bool maximizingPlayer, int depth, int* count, bool naive);
 
 int gridOwner(int board[9][9], int gridX, int gridY);
 

@@ -14,10 +14,16 @@ static sf::Color playableColor = sf::Color(255, 153, 0);
 double boardSize = 0.8;
 double gapSize = 0.01;
 
+HANDLE hConsole;
+
 int main()
 {
+
+	hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+	SetConsoleTextAttribute(hConsole, 15);
+
 	srand(time(NULL));
-	sf::Vector2f screenSize = sf::Vector2f(800, 800);
+	sf::Vector2f screenSize = sf::Vector2f(500, 500);
 	sf::RenderWindow window(sf::VideoMode((int)screenSize.x, (int)screenSize.y), "Ultimate Tic-Tac-Toe");
 	
 	double boxSize = (boardSize - 10 * gapSize) / 9;
@@ -112,35 +118,62 @@ int main()
 	bool mouseDown = false;
 	int playableGrid = -1;
 	int count;
-	fillMoves(moves, boxOwners, playableGrid, player, player, 4, &count);
+	fillMoves(moves, boxOwners, playableGrid, player, player, 4, &count, false);
 	
 	//boxOwners[4][4] = 1;
 	//playableGrid = 4;
 	int HumanCount = -1;
-	while (HumanCount < 0 || HumanCount > 2)
+	do
 	{
 		std::cout << "Number of human players (0-2) : ";
 		std::cin >> HumanCount;
-	}
+	} while (HumanCount < 0 || HumanCount > 2);
 	
 	int depth = 0;
+	int otherBotDepth = 0;
 	if (HumanCount != 2)
 	{
-		while (depth < 1 || depth > 9)
+		do
 		{
 			std::cout << "Bot difficulty (1-8) : ";
 			std::cin >> depth;
+		} while (depth < 1 || depth > 12);
+	}
+	if (HumanCount == 0)
+	{
+		do
+		{
+			std::cout << "Bot 2 difficulty (1-8) : ";
+			std::cin >> otherBotDepth;
+		} while (otherBotDepth < 1 || otherBotDepth > 12);
+	}
+	int naive = 1;
+	int nonNaiveForBoth = 0;
+	if (HumanCount != 2)
+	{
+		do
+		{
+			std::cout << "Use naive search? (0-No, 1-Yes) : ";
+			std::cin >> naive;
+		} while (naive < 0 || naive > 1);
+		if (!naive && HumanCount == 0)
+		{
+			do
+			{
+				std::cout << "Non-Naive for both bots? (0-No, 1-Yes) : ";
+				std::cin >> nonNaiveForBoth;
+			} while (nonNaiveForBoth < 0 || nonNaiveForBoth > 1);
 		}
 	}
 
 	if (HumanCount == 1)
 	{
 		int input = -1;
-		while (input < 0 || input > 1)
+		do
 		{
 			std::cout << "First player (0-Human, 1-Bot) : ";
 			std::cin >> input;
-		}
+		} while (input < 0 || input > 1);
 		player = input;
 	}
 	int start_s = clock();
@@ -220,7 +253,7 @@ int main()
 							{
 								int count = 0;
 								//int start_time = clock();
-								fillMoves(moves, boxOwners, playableGrid, !player, !player, depth, &count);
+								fillMoves(moves, boxOwners, playableGrid, !player, !player, depth, &count, naive);
 								/*int stop_time = clock();
 								timeBank -= (stop_time - start_time) / double(CLOCKS_PER_SEC) * 1000;
 								timeBank += 500;
@@ -302,17 +335,124 @@ int main()
 			{
 				playableGrid = -1;
 			}
-			delete moves;
+			
 			
 			int stop_s = clock();
 			//std::cout << "time: " << (stop_s - start_s) / double(CLOCKS_PER_SEC) << " seconds" << std::endl;
+
+			int color1 = 1;
+			int color0 = 4;
+
+			for (int gridY = 0; gridY < 3; ++gridY)
+			{
+				for (int y = 0; y < 3; ++y)
+				{
+					for (int gridX = 0; gridX < 3; ++gridX)
+					{
+						switch (gridOwner(boxOwners, gridX, gridY))
+						{
+						case -2:
+							color1 = 129;
+							color0 = 132;
+							break;
+						case -1:
+							if (playableGrid == 3 * gridY + gridX || playableGrid == -1)
+							{
+								color1 = 225;
+								color0 = 228;
+							}
+							else {
+								color1 = 1;
+								color0 = 4;
+							}
+							break;
+						case 0:
+							color1 = 65;
+							color0 = 77;
+							break;
+						case 1:
+							color1 = 155;
+							color0 = 148;
+							break;
+						default:
+							color1 = 225;
+							color0 = 228;
+							break;
+						}
+						
+						for (int x = 0; x < 3; ++x)
+						{
+							if (3 * gridX + x == moves->bestMovesX[randIndex] && 3 * gridY + y == moves->bestMovesY[randIndex])
+							{
+								if (boxOwners[3 * gridX + x][3 * gridY + y] == 0)
+								{
+									SetConsoleTextAttribute(hConsole, 164);
+									std::cout << "O";
+								}
+								else if (boxOwners[3 * gridX + x][3 * gridY + y] == 1)
+								{
+									SetConsoleTextAttribute(hConsole, 169);
+									std::cout << "X";
+								}
+							}
+							else {
+								if (boxOwners[3 * gridX + x][3 * gridY + y] == 0)
+								{
+									SetConsoleTextAttribute(hConsole, color0);
+									std::cout << "O";
+								}
+								else if (boxOwners[3 * gridX + x][3 * gridY + y] == 1)
+								{
+									SetConsoleTextAttribute(hConsole, color1);
+									std::cout << "X";
+								}
+								else {
+									SetConsoleTextAttribute(hConsole, color0);
+									std::cout << " ";
+								}
+							}
+						}
+						SetConsoleTextAttribute(hConsole, 15);
+						if (gridX != 2)
+							std::cout << (char)179;
+					}
+					std::cout << std::endl;
+				}
+				if (gridY != 2)
+				{
+					for (int i = 0; i < 2; ++i)
+					{
+						std::cout << (char)196 << (char)196 << (char)196 << (char)197;
+					}
+					std::cout << (char)196 << (char)196 << (char)196;
+					std::cout << std::endl;
+				}
+			}
+			delete moves;
 
 			moves = new Move();
 			if (HumanCount == 0)
 			{
 				//int start_time = clock();
 				int count = 0;
-				fillMoves(moves, boxOwners, playableGrid, !player, !player, depth, &count);
+				bool useNaiveForThisBot = naive;
+				if (!naive && !nonNaiveForBoth)
+				{
+					useNaiveForThisBot = player;
+				}
+				int thisBotDepth = depth;
+				if (player)
+					thisBotDepth = otherBotDepth;
+				std::cout << std::endl << std::endl << "--------------------------------" << std::endl << std::endl;
+				/*CALCULATE NEXT MOVE*/
+				fillMoves(moves, boxOwners, playableGrid, !player, !player, thisBotDepth, &count, useNaiveForThisBot);
+				if (useNaiveForThisBot)
+				{
+					std::cout << "(Naive Bot) Depth " << thisBotDepth << std::endl;
+				}
+				else {
+					std::cout << "(Non-Naive Bot) Depth " << thisBotDepth << std::endl;
+				}
 				/*int stop_time = clock();
 				if (player == true)
 				{
@@ -332,7 +472,6 @@ int main()
 			}
 			
 			player = !player;
-			
 		}
 
 		for (int gridY = 0; gridY < 3; ++gridY)

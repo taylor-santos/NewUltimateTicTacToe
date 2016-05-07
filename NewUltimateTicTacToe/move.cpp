@@ -93,12 +93,12 @@ int boardWinner(int board[9][9])
 	return -2;
 }
 
-void fillMoves(Move* move, int board[9][9], int playableGrid, bool currPlayer, bool maximizingPlayer, int depth, int* count)
+void fillMoves(Move* move, int board[9][9], int playableGrid, bool currPlayer, bool maximizingPlayer, int depth, int* count, bool naive)
 {
 	if (move == NULL)
 		return;
 	move->maximizing = currPlayer == maximizingPlayer;
-	if (depth == 0 || boardWinner(board) != -1)
+	if (depth <= 0 || boardWinner(board) != -1)
 	{
 		move->score = getScore(board, maximizingPlayer);
 		move->dist = 0;
@@ -135,15 +135,25 @@ void fillMoves(Move* move, int board[9][9], int playableGrid, bool currPlayer, b
 							int tempGrid[9][9];
 							std::memcpy(&tempGrid[0][0], &board[0][0], sizeof(int) * 9 * 9);
 							tempGrid[3 * gridX + x][3 * gridY + y] = currPlayer;
+							int tempDepth = depth;
+							if (!naive)
+							{
+								if (gridOwner(tempGrid, gridX, gridY) == currPlayer)
+									tempDepth++;
+							}
 							move->nextMoves[3 * gridX + x][3 * gridY + y] = new Move();
 							int nextPlayableGrid = 3 * y + x;
 							if (gridOwner(tempGrid, x, y) != -1)
+							{
+								//if (!naive)
+								//	tempDepth--;
 								nextPlayableGrid = -1;
+							}
 							(*count)++;
 							//int board_win = boardWinner(tempGrid);
 							//if (board_win == -1)
 							//{
-							fillMoves(move->nextMoves[3 * gridX + x][3 * gridY + y], tempGrid, nextPlayableGrid, !currPlayer, maximizingPlayer, depth - 1, count);
+							fillMoves(move->nextMoves[3 * gridX + x][3 * gridY + y], tempGrid, nextPlayableGrid, !currPlayer, maximizingPlayer, tempDepth - 1, count, naive);
 							for (int moveY = 0; moveY < 9; ++moveY)
 							{
 								for (int moveX = 0; moveX < 9; ++moveX)
