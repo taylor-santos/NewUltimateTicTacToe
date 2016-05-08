@@ -145,8 +145,8 @@ void fillMoves(Move* move, int board[9][9], int playableGrid, bool currPlayer, b
 							int nextPlayableGrid = 3 * y + x;
 							if (gridOwner(tempGrid, x, y) != -1)
 							{
-								//if (!naive)
-								//	tempDepth--;
+								if (!naive)
+									tempDepth--;
 								nextPlayableGrid = -1;
 							}
 							(*count)++;
