@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <iostream>
 #include "move.h"
 
 int gridOwner(int board[9][9], int gridX, int gridY)
@@ -91,6 +92,131 @@ int boardWinner(int board[9][9])
 		}
 	}
 	return -2;
+}
+
+int minimax(int board[9][9], int playableGrid, int currPlayer, int depth, bool maximizingPlayer)
+{
+	if (depth <= 0 || boardWinner(board) != -1)
+	{
+		return getScore(board, currPlayer);
+	}
+	int bestScore = maximizingPlayer ? INT_MIN : INT_MAX;
+	for (int gridY = 0; gridY < 3; ++gridY)
+	{
+		for (int gridX = 0; gridX < 3; ++gridX)
+		{
+			if (playableGrid == 3 * gridY + gridX || (playableGrid == -1 && gridOwner(board, gridX, gridY) == -1))
+			{
+				for (int y = 0; y < 3; ++y)
+				{
+					for (int x = 0; x < 3; ++x)
+					{
+						if (board[3 * gridX + x][3 * gridY + y] == -1)
+						{
+							int newBoard[9][9];
+							std::memcpy(&newBoard[0][0], &board[0][0], sizeof(int) * 9 * 9);
+							newBoard[3 * gridX + x][3 * gridY + y] = currPlayer;
+							int newPlayableGrid = 3 * y + x;
+							if (gridOwner(newBoard, x, y) != -1)
+							{
+								newPlayableGrid = -1;
+							}
+							bestScore = maximizingPlayer ? std::max(bestScore, minimax(newBoard, newPlayableGrid, !currPlayer, depth - 1, false)) : std::min(bestScore, minimax(newBoard, newPlayableGrid, !currPlayer, depth - 1, true));
+						}
+					}
+				}
+			}
+		}
+	}
+	return bestScore;
+}
+
+int alpha_beta(int board[9][9], int playableGrid, int currPlayer, int depth, int alpha, int beta, bool maximizingPlayer, bool scorePlayer, int* count)
+{
+	(*count)++;
+	if (depth <= 0 || boardWinner(board) != -1)
+	{
+		return getScore(board, scorePlayer);
+	}
+	if (maximizingPlayer)
+	{
+		int v = INT_MIN;
+		bool cut_off = false;
+		for (int gridY = 0; gridY < 3 && !cut_off; ++gridY)
+		{
+			for (int gridX = 0; gridX < 3 && !cut_off; ++gridX)
+			{
+				if (playableGrid == 3 * gridY + gridX || (playableGrid == -1 && gridOwner(board, gridX, gridY) == -1))
+				{
+					for (int y = 0; y < 3 && !cut_off; ++y)
+					{
+						for (int x = 0; x < 3 && !cut_off; ++x)
+						{
+							if (board[3 * gridX + x][3 * gridY + y] == -1)
+							{
+								int newBoard[9][9];
+								std::memcpy(&newBoard[0][0], &board[0][0], sizeof(int) * 9 * 9);
+								newBoard[3 * gridX + x][3 * gridY + y] = currPlayer;
+								int newPlayableGrid = 3 * y + x;
+								if (gridOwner(newBoard, x, y) != -1)
+								{
+									newPlayableGrid = -1;
+								}
+								int next = alpha_beta(newBoard, newPlayableGrid, !currPlayer, depth - 1, alpha, beta, false, scorePlayer, count);
+								v = std::max(v, next);
+								alpha = std::max(alpha, v);
+								if (beta <= alpha)
+								{
+									cut_off = true;
+									break;
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		return v;
+	}
+	else {
+		int v = INT_MAX;
+		bool cut_off = false;
+		for (int gridY = 0; gridY < 3 && !cut_off; ++gridY)
+		{
+			for (int gridX = 0; gridX < 3 && !cut_off; ++gridX)
+			{
+				if (playableGrid == 3 * gridY + gridX || (playableGrid == -1 && gridOwner(board,gridX,gridY) == -1))
+				{
+					for (int y = 0; y < 3 && !cut_off; ++y)
+					{
+						for (int x = 0; x < 3 && !cut_off; ++x)
+						{
+							if (board[3 * gridX + x][3 * gridY + y] == -1)
+							{
+								int newBoard[9][9];
+								std::memcpy(&newBoard[0][0], &board[0][0], sizeof(int) * 9 * 9);
+								newBoard[3 * gridX + x][3 * gridY + y] = currPlayer;
+								int newPlayableGrid = 3 * y + x;
+								if (gridOwner(newBoard, x, y) != -1)
+								{
+									newPlayableGrid = -1;
+								}
+								int next = alpha_beta(newBoard, newPlayableGrid, !currPlayer, depth - 1, alpha, beta, true, scorePlayer, count);
+								v = std::min(v, next);
+								beta = std::min(beta, v);
+								if (beta <= alpha)
+								{
+									cut_off = true;
+									break;
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		return v;
+	}
 }
 
 void fillMoves(Move* move, int board[9][9], int playableGrid, bool currPlayer, bool maximizingPlayer, int depth, int* count, bool naive)
@@ -237,6 +363,7 @@ int getScore(int board[9][9], int player)
 				}
 				else if (gridWinner == -1)
 				{
+					/*
 					for (int y = 0; y < 3; ++y)
 					{
 						for (int x = 0; x < 3; ++x)
@@ -250,6 +377,7 @@ int getScore(int board[9][9], int player)
 							}
 						}
 					}
+					*/
 					int boxOwners[3][3];
 					for (int y = 0; y < 3; ++y)
 					{
