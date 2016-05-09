@@ -1,6 +1,9 @@
+#define NOMINMAX
+
 #include <Windows.h>
 #include <iostream>
 #include <vector>
+#include <algorithm>
 #include <SFML/Graphics.hpp>
 #include <ctime>
 #include "move.h"
@@ -113,12 +116,12 @@ int main()
 		}
 	}
 
-	Move* moves = new Move();
+	//Move* moves = new Move();
 	bool player = false;
 	bool mouseDown = false;
 	int playableGrid = -1;
 	int count;
-	fillMoves(moves, boxOwners, playableGrid, player, player, 4, &count, false);
+	//fillMoves(moves, boxOwners, playableGrid, player, player, 4, &count, false);
 	
 	//boxOwners[4][4] = 1;
 	//playableGrid = 4;
@@ -139,6 +142,7 @@ int main()
 			std::cin >> depth;
 		} while (depth < 1 || depth > 12);
 	}
+	/*
 	if (HumanCount == 0)
 	{
 		do
@@ -165,7 +169,7 @@ int main()
 			} while (nonNaiveForBoth < 0 || nonNaiveForBoth > 1);
 		}
 	}
-
+	*/
 	if (HumanCount == 1)
 	{
 		int input = -1;
@@ -247,13 +251,13 @@ int main()
 							{
 								playableGrid = -1;
 							}
-							moves = new Move();
+							//moves = new Move();
 							
-							if (HumanCount != 2)
-							{
-								int count = 0;
+						//	if (HumanCount != 2)
+						//	{
+								//int count = 0;
 								//int start_time = clock();
-								fillMoves(moves, boxOwners, playableGrid, !player, !player, depth, &count, naive);
+								//fillMoves(moves, boxOwners, playableGrid, !player, !player, depth, &count, naive);
 								/*int stop_time = clock();
 								timeBank -= (stop_time - start_time) / double(CLOCKS_PER_SEC) * 1000;
 								timeBank += 500;
@@ -267,9 +271,9 @@ int main()
 									depth++;
 								}
 								prevTime = timeBank;*/
-								std::cout << "Depth: " << depth << std::endl;
-								std::cout << count << " moves calculated." << std::endl;
-							}
+								//std::cout << "Depth: " << depth << std::endl;
+								//std::cout << count << " moves calculated." << std::endl;
+							//}
 							//std::cout << (int)mouseGrid.x << "," << (int)mouseGrid.y << " " << (int)mousePos.x << "," << (int)mousePos.y << std::endl;
 							//std::cout << "Next Grid: " << playableGrid;
 							//std::cout << "Player " << player << " Score: " << getScore(boxOwners, player) << std::endl;
@@ -283,8 +287,12 @@ int main()
 			}
 		}
 	/*AI*/
-		else if (boardWinner(boxOwners) == -1){
+		else if (boardWinner(boxOwners) == -1) {
+			/*
 			std::cout << "Best score: " << moves->score << std::endl;
+			int count = 0;
+			std::cout << "Alpha-Beta score: " << alpha_beta(boxOwners, playableGrid, player, depth, INT_MIN, INT_MAX, true, &count) << std::endl;
+			std::cout << "Alpha-Beta moves evaluated: " << count << std::endl;
 			for (int y = 0; y < 9; ++y)
 			{
 				for (int x = 0; x < 9; ++x)
@@ -327,6 +335,7 @@ int main()
 				if (y % 3 == 2)
 					std::cout << std::endl;
 			}
+
 			int randIndex = rand() % moves->bestMovesX.size();
 			std::cout << "Selected move (" << moves->bestMovesX[randIndex] << "," << moves->bestMovesY[randIndex] << ")" << std::endl;
 			boxOwners[moves->bestMovesX[randIndex]][moves->bestMovesY[randIndex]] = player;
@@ -335,10 +344,115 @@ int main()
 			{
 				playableGrid = -1;
 			}
-			
-			
+
+
 			int stop_s = clock();
 			//std::cout << "time: " << (stop_s - start_s) / double(CLOCKS_PER_SEC) << " seconds" << std::endl;
+			*/
+
+			int max_val = INT_MIN;
+			std::vector<int> bestMovesX;
+			std::vector<int> bestMovesY;
+			int count = 0;
+			
+			int test_count = 0;
+			//int test = alpha_beta(boxOwners, playableGrid, player, depth + 1, INT_MIN, INT_MAX, true, player, &test_count);
+			//int minimax_test = minimax(boxOwners, playableGrid, player, depth + 1, true);
+			
+			int start_time = clock();
+
+			
+			Move* newMove = new Move();
+			fillMoves(newMove, boxOwners, playableGrid, player, player, depth + 1, &count, true);
+			std::cout << "Tree Search:" << std::endl;
+			
+
+			int a = INT_MIN;
+
+			for (int gridY = 0; gridY < 3; ++gridY)
+			{
+				for (int gridX = 0; gridX < 3; ++gridX)
+				{
+					if (playableGrid == 3 * gridY + gridX || playableGrid == -1)
+					{
+						for (int y = 0; y < 3; ++y)
+						{
+							for (int x = 0; x < 3; ++x)
+							{
+								if (boxOwners[3 * gridX + x][3 * gridY + y] == -1)
+								{
+									int newBoard[9][9];
+									std::memcpy(&newBoard[0][0], &boxOwners[0][0], sizeof(int) * 9 * 9);
+									newBoard[3 * gridX + x][3 * gridY + y] = player;
+									int newPlayableGrid = 3 * y + x;
+									if (gridOwner(newBoard, x, y) != -1)
+									{
+										newPlayableGrid = -1;
+									}
+									int val = alpha_beta(newBoard, newPlayableGrid, !player, depth, INT_MIN, INT_MAX, false, player, &count);
+									std::cout << "Tree score: " << newMove->nextMoves[3*gridX+x][3*gridY+y]->score << ", A-B score: " << val << std::endl;
+									
+									//int val = minimax(newBoard, newPlayableGrid, !player, depth, false);
+									//Move* newMove = new Move();
+									//fillMoves(newMove, newBoard, playableGrid, !player, player, depth, &test_count, true);
+									//int val = newMove->score;
+									//delete newMove;
+									if (val > max_val)
+									{
+										max_val = val;
+										bestMovesX.clear();
+										bestMovesY.clear();
+									}
+									if (val == max_val)
+									{
+										bestMovesX.push_back(3 * gridX + x);
+										bestMovesY.push_back(3 * gridY + y);
+									}
+									a = std::max(a, max_val);
+								}
+							}
+						}
+					}
+				}
+			}
+
+			bestMovesX = newMove->bestMovesX;
+			bestMovesY = newMove->bestMovesY;
+			max_val = newMove->score;
+			
+			int stop_time = clock();
+
+			/*
+			for (int i = 0; i < bestMovesX.size() || i < newMove->bestMovesX.size(); ++i)
+			{
+				std::cout << "(" << bestMovesX[i] << "," << bestMovesY[i] << ") = (" << newMove->bestMovesX[i] << "," << newMove->bestMovesY[i] << ")" << std::endl;
+			}
+			std::cout << "Score: " << newMove->score << " = " << max << std::endl;
+			delete newMove;
+			*/
+			int randIndex = rand() % bestMovesX.size();
+			boxOwners[bestMovesX[randIndex]][bestMovesY[randIndex]] = player;
+			playableGrid = 3 * (bestMovesY[randIndex] % 3) + (bestMovesX[randIndex] % 3);
+			if (gridOwner(boxOwners, bestMovesX[randIndex] % 3, bestMovesY[randIndex] % 3) != -1)
+			{
+				playableGrid = -1;
+			}
+
+
+			std::cout << "Selected move (" << bestMovesX[randIndex] << "," << bestMovesY[randIndex] << ") with score " << max_val << std::endl;
+			/*
+			if (test == minimax_test)
+			{
+				std::cout << "Alpha-Beta and Minimax MATCH. (" << test << ")" <<  std::endl;
+			}
+			if (max_val != test || max_val != minimax_test){
+				for (int i = 0; i < 10; ++i)
+					std::cout << "Alpha-Beta and Minimax DO NOT MATCH.";
+				std::cout << std::endl;
+			}
+			*/
+			std::cout << count << " moves evaluated in " << (stop_time - start_time) / double(CLOCKS_PER_SEC) * 1000 << " ms." << std::endl;
+			std::cout << std::endl;
 
 			int color1 = 1;
 			int color0 = 4;
@@ -382,7 +496,7 @@ int main()
 						
 						for (int x = 0; x < 3; ++x)
 						{
-							if (3 * gridX + x == moves->bestMovesX[randIndex] && 3 * gridY + y == moves->bestMovesY[randIndex])
+							if (3 * gridX + x == bestMovesX[randIndex] && 3 * gridY + y == bestMovesY[randIndex])
 							{
 								if (boxOwners[3 * gridX + x][3 * gridY + y] == 0)
 								{
@@ -428,9 +542,7 @@ int main()
 					std::cout << std::endl;
 				}
 			}
-			delete moves;
-
-			moves = new Move();
+			/*
 			if (HumanCount == 0)
 			{
 				//int start_time = clock();
@@ -444,7 +556,7 @@ int main()
 				if (player)
 					thisBotDepth = otherBotDepth;
 				std::cout << std::endl << std::endl << "--------------------------------" << std::endl << std::endl;
-				/*CALCULATE NEXT MOVE*/
+
 				fillMoves(moves, boxOwners, playableGrid, !player, !player, thisBotDepth, &count, useNaiveForThisBot);
 				if (useNaiveForThisBot)
 				{
@@ -467,10 +579,10 @@ int main()
 					{
 						depth++;
 					}
-				}*/
+				}
 				std::cout << count << " moves calculated." << std::endl;
 			}
-			
+			*/
 			player = !player;
 		}
 
